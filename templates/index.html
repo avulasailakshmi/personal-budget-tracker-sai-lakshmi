@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BudgetWise Personal Budget Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span>₹</span> BudgetWise</div>
+    <nav>
+      <button class="nav-item active" data-view="dashboard">Dashboard</button>
+      <button class="nav-item" data-view="transactions">Transactions</button>
+      <button class="nav-item" data-view="accounts">Accounts</button>
+      <button class="nav-item" data-view="budgets">Budgets</button>
+      <button class="nav-item" data-view="import">Import CSV</button>
+    </nav>
+    <p class="sidebar-note">Personal finance made clear.</p>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <button id="menuButton" class="menu-button" aria-label="Toggle navigation">☰</button>
+      <div>
+        <h1 id="pageTitle">Dashboard</h1>
+        <p>Track your money with confidence</p>
+      </div>
+      <label class="month-picker">Month <input id="globalMonth" type="month"></label>
+    </header>
+
+    <div id="alert" class="alert" role="status" aria-live="polite"></div>
+
+    <section id="dashboardView" class="view active">
+      <div class="summary-grid">
+        <article class="summary-card income"><span>Income</span><strong id="incomeTotal">₹0</strong></article>
+        <article class="summary-card expense"><span>Expenses</span><strong id="expenseTotal">₹0</strong></article>
+        <article class="summary-card net"><span>Net savings</span><strong id="netTotal">₹0</strong></article>
+        <article class="summary-card balance"><span>Total balance</span><strong id="balanceTotal">₹0</strong></article>
+      </div>
+      <div class="chart-grid">
+        <article class="panel"><h2>Spending by category</h2><div class="chart-wrap"><canvas id="categoryChart"></canvas></div></article>
+        <article class="panel"><h2>Income vs expenses</h2><div class="chart-wrap"><canvas id="trendChart"></canvas></div></article>
+      </div>
+      <article class="panel"><div class="panel-heading"><h2>Budget status</h2><button class="text-button" data-go="budgets">Manage budgets</button></div><div id="dashboardBudgets"></div></article>
+    </section>
+
+    <section id="transactionsView" class="view">
+      <div class="two-column">
+        <article class="panel">
+          <h2 id="transactionFormTitle">Add transaction</h2>
+          <form id="transactionForm" class="form-grid">
+            <input id="transactionId" type="hidden">
+            <label>Type<select id="transactionType" required><option value="expense">Expense</option><option value="income">Income</option></select></label>
+            <label>Amount<input id="transactionAmount" type="number" min="0.01" step="0.01" required></label>
+            <label>Date<input id="transactionDate" type="date" required></label>
+            <label>Category<input id="transactionCategory" list="categoryOptions" required></label>
+            <label>Account<select id="transactionAccount" required></select></label>
+            <label class="wide">Note<input id="transactionNote" maxlength="300"></label>
+            <div class="form-actions wide"><button class="primary" type="submit">Save transaction</button><button id="cancelEdit" class="secondary hidden" type="button">Cancel edit</button></div>
+          </form>
+        </article>
+        <article class="panel">
+          <h2>Transfer money</h2>
+          <form id="transferForm" class="form-grid">
+            <label>From<select id="transferFrom" required></select></label>
+            <label>To<select id="transferTo" required></select></label>
+            <label>Amount<input id="transferAmount" type="number" min="0.01" step="0.01" required></label>
+            <label>Date<input id="transferDate" type="date" required></label>
+            <label class="wide">Note<input id="transferNote" maxlength="300"></label>
+            <div class="form-actions wide"><button class="primary" type="submit">Transfer</button></div>
+          </form>
+        </article>
+      </div>
+      <article class="panel table-panel">
+        <div class="panel-heading"><h2>Transactions</h2><span id="transactionCount" class="pill"></span></div>
+        <div class="table-scroll"><table><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Account</th><th>Note</th><th>Amount</th><th>Actions</th></tr></thead><tbody id="transactionRows"></tbody></table></div>
+      </article>
+    </section>
+
+    <section id="accountsView" class="view">
+      <div class="two-column accounts-layout">
+        <article class="panel">
+          <h2>Add account</h2>
+          <form id="accountForm" class="form-grid">
+            <label class="wide">Account name<input id="accountName" required maxlength="80" placeholder="Example: Savings Bank"></label>
+            <label>Type<select id="accountType" required><option value="cash">Cash</option><option value="bank">Bank</option><option value="card">Card</option></select></label>
+            <label>Opening balance<input id="openingBalance" type="number" step="0.01" value="0" required></label>
+            <div class="form-actions wide"><button class="primary" type="submit">Add account</button></div>
+          </form>
+        </article>
+        <div id="accountCards" class="account-cards"></div>
+      </div>
+    </section>
+
+    <section id="budgetsView" class="view">
+      <div class="two-column budgets-layout">
+        <article class="panel">
+          <h2>Set monthly budget</h2>
+          <form id="budgetForm" class="form-grid">
+            <label>Month<input id="budgetMonth" type="month" required></label>
+            <label>Category<input id="budgetCategory" list="categoryOptions" required></label>
+            <label class="wide">Budget amount<input id="budgetAmount" type="number" min="0.01" step="0.01" required></label>
+            <div class="form-actions wide"><button class="primary" type="submit">Save budget</button></div>
+          </form>
+        </article>
+        <article class="panel"><h2>Budget progress</h2><div id="budgetList"></div></article>
+      </div>
+    </section>
+
+    <section id="importView" class="view">
+      <article class="panel import-panel">
+        <h2>Import transactions from CSV</h2>
+        <p class="muted">Upload a UTF-8 CSV, preview the data, map columns, and import valid rows. Re-importing the same rows will not create duplicates.</p>
+        <form id="previewForm" class="upload-row"><input id="csvFile" type="file" accept=".csv,text/csv" required><button class="primary" type="submit">Preview CSV</button></form>
+        <div id="importMapping" class="hidden">
+          <h3>Map your columns</h3>
+          <div id="mappingFields" class="mapping-grid"></div>
+          <div class="table-scroll"><table><thead id="previewHead"></thead><tbody id="previewRows"></tbody></table></div>
+          <button id="importButton" class="primary" type="button">Import transactions</button>
+        </div>
+        <div id="importResults"></div>
+      </article>
+    </section>
+  </main>
+
+  <datalist id="categoryOptions">
+    <option value="Salary"><option value="Food"><option value="Rent"><option value="Transport"><option value="Shopping"><option value="Utilities"><option value="Healthcare"><option value="Education"><option value="Entertainment"><option value="Other">
+  </datalist>
+</body>
+</html>
+
