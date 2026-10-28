@@ -1,0 +1,6 @@
+date,amount,type,category,account,note
+2026-10-01,45000,income,Salary,Main Bank,Monthly salary
+2026-10-05,2400,expense,Food,Main Bank,Groceries
+2026-10-08,650,expense,Transport,Wallet,Bus and auto
+2026-10-12,1200,expense,Utilities,Main Bank,Electricity bill
+
